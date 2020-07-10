@@ -3,7 +3,7 @@ const config = require("../config")
 const mongoose = require('mongoose')
 
 // Connect to DB with user and authentication
-mongoose.connect(config.dbURL, {
+mongoose.connect("mongodb+srv://main_user:18QWNQisA7A6UY6z@cluster0.sut5e.mongodb.net/whotgame?retryWrites=true&w=majority", {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   useCreateIndex: true
