@@ -2,7 +2,6 @@ const config = require('./config');
 const app = require('./app.js');
 
 const db = require('./db/db');
-// const port = config.port;
 const port = provess.env.PORT;
 
 const server = app.listen(port, () => {
