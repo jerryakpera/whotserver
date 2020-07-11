@@ -33,8 +33,8 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJSDoc(swaggerOptions);
 app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 
-const baseURL = process.env.BASEURL;
-console.log("********BASEURL*********", baseURL)
+// const baseURL = process.env.BASEURL;
+// console.log("********BASEURL*********", baseURL)
 // const baseURL = config.baseURL;
 
 app.post("/test", (req, res) => {
@@ -47,7 +47,7 @@ app.post("/test", (req, res) => {
 
 // ROUTES
 const authRoute = require('./api/auth/auth');
-app.use(`${baseURL}/auth`, authRoute);
+app.use(`/api/v1/auth`, authRoute);
 
 app.use((req, res, next) => {
 	const error = new Error('Not found');
