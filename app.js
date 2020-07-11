@@ -36,6 +36,14 @@ app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 const baseURL = process.env.BASEURL;
 // const baseURL = config.baseURL;
 
+app.post("/test", (req, res) => {
+	res.json({
+		status: 200,
+		message: "Test worked",
+		data: {}
+	})
+})
+
 // ROUTES
 const authRoute = require('./api/auth/auth');
 app.use(`${baseURL}/auth`, authRoute);
