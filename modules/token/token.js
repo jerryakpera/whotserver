@@ -8,17 +8,20 @@ const RefreshToken = require("../../db/models/RefreshToken")
 
 module.exports = {
   createToken: (user) => {
-    const tokenSecret = config.tokenSecret
+    const tokenSecret = process.env.TOKENSECRET
+    // const tokenSecret = config.tokenSecret
     return jwt.sign({
       userID: user._id,
       role: user.role
     }, tokenSecret, {
-      expiresIn: config.jwtExpiryInSeconds
+      // expiresIn: config.jwtExpiryInSeconds
+      expiresIn: process.env.JWTEXPIRYINSECONDS
     })
   },
 
   createRefreshToken: (userID) => {
-    const refreshTokenSecret = config.refreshTokenSecret
+    // const refreshTokenSecret = config.refreshTokenSecret
+    const refreshTokenSecret = process.env.REFRESHTOKENSECRET
     const now = new Date()
 
     return new Promise((resolve, reject) => {
@@ -26,7 +29,8 @@ module.exports = {
       const refreshToken = {
         userID,
         token: jwt.sign({userID}, refreshTokenSecret),
-        expiresIn: now.setDate(now.getDate() + config.refreshTokenExpiresIn)
+        expiresIn: now.setDate(now.getDate() + process.env.REFRESHTOKENEXPIRESIN)
+        // expiresIn: now.setDate(now.getDate() + config.refreshTokenExpiresIn)
       }
       RefreshToken.findOneAndUpdate({user: userID}, refreshToken, {
         new: true,
@@ -42,11 +46,13 @@ module.exports = {
   },
 
   getExpiresIn: (token) => {
-    return jwt.verify(token, config.tokenSecret).exp
+    return jwt.verify(token, process.env.TOKENSECRET).exp
+    // return jwt.verify(token, config.tokenSecret).exp
   },
 
   getTokenData: (token) => {
-    const verified = jwt.verify(token, config.tokenSecret)
+    const verified = jwt.verify(token, process.env.TOKENSECRET)
+    // const verified = jwt.verify(token, config.tokenSecret)
     return verified
   },
 
@@ -63,7 +69,8 @@ module.exports = {
     }
     
     try {
-      const verified = jwt.verify(token, config.tokenSecret)
+      const verified = jwt.verify(token, process.env.TOKENSECRET)
+      // const verified = jwt.verify(token, config.tokenSecret)
       AUTH.findByUserID(verified.userID).then(user => {
         if (!user) {
           return res.json({
@@ -96,7 +103,8 @@ module.exports = {
     }
 
     try {
-      const verified = jwt.verify(token, config.tokenSecret)
+      const verified = jwt.verify(token, process.env.TOKENSECRET)
+      // const verified = jwt.verify(token, config.tokenSecret)
       AUTH.findByUserID(verified.userID).then(user => {
         if (!user) {
           return res.json({
@@ -138,7 +146,8 @@ module.exports = {
     }
 
     try {
-      const verified = jwt.verify(token, config.tokenSecret)
+      const verified = jwt.verify(token, process.env.TOKENSECRET)
+      // const verified = jwt.verify(token, config.tokenSecret)
       AUTH.findByUserID(verified.userID).then(user => {
         if (!user) {
           return res.json({
@@ -169,7 +178,8 @@ module.exports = {
   },
 
   getID: (token) => {
-    const verified = jwt.verify(token, config.tokenSecret)
+    const verified = jwt.verify(token, process.env.TOKENSECRET)
+    // const verified = jwt.verify(token, config.tokenSecret)
     return new Promise((resolve, reject) => {
       resolve(verified.userID)
     })

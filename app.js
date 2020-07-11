@@ -33,7 +33,8 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJSDoc(swaggerOptions);
 app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 
-const baseURL = config.baseURL;
+const baseURL = process.env.BASEURL;
+// const baseURL = config.baseURL;
 
 // ROUTES
 const authRoute = require('./api/auth/auth');

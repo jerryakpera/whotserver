@@ -3,7 +3,7 @@ const config = require("../config")
 const mongoose = require('mongoose')
 
 // Connect to DB with user and authentication
-mongoose.connect(config.dbURL, {
+mongoose.connect(process.env.DBURL, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   useCreateIndex: true

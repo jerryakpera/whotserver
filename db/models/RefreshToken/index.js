@@ -18,7 +18,8 @@ const refreshTokenSchema = new mongoose.Schema({
   timestamps: true
 })
 
-const refreshTokenExpiresAfter = config.jwtExpiryInSeconds + 60
+const refreshTokenExpiresAfter = process.env.JWTEXPIRYINSECONDS + 60
+// const refreshTokenExpiresAfter = config.jwtExpiryInSeconds + 60
 refreshTokenSchema.index({"createdAt": 1}, {expiresAfterSeconds: refreshTokenExpiresAfter})
 
 refreshTokenSchema.plugin(uniqueValidator)
