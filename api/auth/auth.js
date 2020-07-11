@@ -14,7 +14,15 @@ const {
   validationResult
 } = require('express-validator')
 
-router.get("/facebook", passport.authenticate("facebook"));
+// router.get("/facebook", passport.authenticate("facebook"));
+
+router.post("/test", (req, res) => {
+	res.json({
+		status: 200,
+		message: "Test worked",
+		data: {}
+	})
+})
 
 router.post("/tokentest", TOKEN.verify, (req, res) => {
   res.json({
