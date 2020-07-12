@@ -33,10 +33,6 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJSDoc(swaggerOptions);
 app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 
-// const baseURL = process.env.BASEURL;
-// console.log("********BASEURL*********", baseURL)
-// const baseURL = config.baseURL;
-
 app.post("/test", (req, res) => {
 	res.json({
 		status: 200,

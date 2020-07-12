@@ -5,23 +5,24 @@ const AUTH = require("../../api/auth/authController")
 const RefreshToken = require("../../db/models/RefreshToken")
 // const _ = require("../../services/util")
 
+const ENV = require("../../config/env")
 
 module.exports = {
   createToken: (user) => {
-    const tokenSecret = process.env.TOKENSECRET
+    const tokenSecret = ENV === "dev" ? config.tokenSecret : process.env.TOKENSECRET
     // const tokenSecret = config.tokenSecret
     return jwt.sign({
       userID: user._id,
       role: user.role
     }, tokenSecret, {
       // expiresIn: config.jwtExpiryInSeconds
-      expiresIn: process.env.JWTEXPIRYINSECONDS
+      expiresIn: ENV === "dev" ? config.jwtExpiryInSeconds : process.env.JWTEXPIRYINSECONDS
     })
   },
 
   createRefreshToken: (userID) => {
     // const refreshTokenSecret = config.refreshTokenSecret
-    const refreshTokenSecret = process.env.REFRESHTOKENSECRET
+    const refreshTokenSecret = ENV === "dev" ? config.refreshTokenSecret : process.env.REFRESHTOKENSECRET
     const now = new Date()
 
     return new Promise((resolve, reject) => {
@@ -29,7 +30,7 @@ module.exports = {
       const refreshToken = {
         userID,
         token: jwt.sign({userID}, refreshTokenSecret),
-        expiresIn: now.setDate(now.getDate() + process.env.REFRESHTOKENEXPIRESIN)
+        expiresIn: now.setDate(now.getDate() + ENV === "dev" ? config.refreshTokenExpiresIn : process.env.REFRESHTOKENEXPIRESIN)
         // expiresIn: now.setDate(now.getDate() + config.refreshTokenExpiresIn)
       }
       RefreshToken.findOneAndUpdate({user: userID}, refreshToken, {
@@ -46,12 +47,12 @@ module.exports = {
   },
 
   getExpiresIn: (token) => {
-    return jwt.verify(token, process.env.TOKENSECRET).exp
+    return jwt.verify(token, ENV === "dev" ? config.tokenSecret : process.env.TOKENSECRET).exp
     // return jwt.verify(token, config.tokenSecret).exp
   },
 
   getTokenData: (token) => {
-    const verified = jwt.verify(token, process.env.TOKENSECRET)
+    const verified = jwt.verify(token, ENV === "dev" ? config.tokenSecret : process.env.TOKENSECRET)
     // const verified = jwt.verify(token, config.tokenSecret)
     return verified
   },
@@ -69,7 +70,7 @@ module.exports = {
     }
     
     try {
-      const verified = jwt.verify(token, process.env.TOKENSECRET)
+      const verified = jwt.verify(token, ENV === "dev" ? config.tokenSecret : process.env.TOKENSECRET)
       // const verified = jwt.verify(token, config.tokenSecret)
       AUTH.findByUserID(verified.userID).then(user => {
         if (!user) {
@@ -103,7 +104,7 @@ module.exports = {
     }
 
     try {
-      const verified = jwt.verify(token, process.env.TOKENSECRET)
+      const verified = jwt.verify(token, ENV === "dev" ? config.tokenSecret : process.env.TOKENSECRET)
       // const verified = jwt.verify(token, config.tokenSecret)
       AUTH.findByUserID(verified.userID).then(user => {
         if (!user) {
@@ -146,7 +147,7 @@ module.exports = {
     }
 
     try {
-      const verified = jwt.verify(token, process.env.TOKENSECRET)
+      const verified = jwt.verify(token, ENV === "dev" ? config.tokenSecret : process.env.TOKENSECRET)
       // const verified = jwt.verify(token, config.tokenSecret)
       AUTH.findByUserID(verified.userID).then(user => {
         if (!user) {
@@ -178,7 +179,7 @@ module.exports = {
   },
 
   getID: (token) => {
-    const verified = jwt.verify(token, process.env.TOKENSECRET)
+    const verified = jwt.verify(token, ENV === "dev" ? config.tokenSecret : process.env.TOKENSECRET)
     // const verified = jwt.verify(token, config.tokenSecret)
     return new Promise((resolve, reject) => {
       resolve(verified.userID)

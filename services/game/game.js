@@ -4,9 +4,10 @@ const _ = require("../utils")
 
 const games = []
 
-function createGame(data) {
+function createGame(data, socketID) {
   const player = {
     ...data.player,
+    socketID,
     cards: [],
     shouts: []
   }
@@ -33,7 +34,8 @@ function createGame(data) {
     createdAt: _.formatDate(new Date()),
     lastMove: "",
     playedCards: "",
-    totalPlayers: data.game.totalPlayers
+    totalPlayers: data.game.totalPlayers,
+    noOfCards: data.game.noOfCards
   }
 
   newGame.players.push(player)
@@ -61,9 +63,10 @@ function getOpenGames() {
   return openGames
 }
 
-function joinGame(data) {
+function joinGame(data, socketID) {
   const player = {
     ...data.player,
+    socketID,
     cards: [],
     shouts: []
   }
@@ -96,9 +99,36 @@ function leaveGame(data) {
   }
 }
 
+function checkForPlayer(socketID) {
+  let playerExists = false
+
+  games.forEach(game => {
+    const playerIndex = game.players.findIndex(player => {
+      if (player.socketID === socketID) playerExists = true
+    })
+  })
+
+  return playerExists
+}
+
+function removePlayer(socketID) {
+  const gameLeft = games.map(game => {
+    const playerIndex = game.players.findIndex(player => player.socketID === socketID)
+
+    game.players.splice(playerIndex, 1)
+
+    return game
+  })
+
+  return gameLeft
+}
+
+
 module.exports = {
   createGame,
   getOpenGames,
   joinGame,
-  leaveGame
+  leaveGame,
+  removePlayer,
+  checkForPlayer
 }

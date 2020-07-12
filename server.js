@@ -1,8 +1,12 @@
 const config = require('./config');
 const app = require('./app.js');
 
+const ENV = require("./config/env")
+
 const db = require('./db/db');
-const port = process.env.PORT;
+const port = ENV === "dev" ? process.env.PORT : config.port;
+
+const _cards = require("./services/game/cards")
 
 const server = app.listen(port, () => {
   console.log(`Server is listening on port ${port}`);
@@ -17,14 +21,22 @@ process.on('unhandledRejection', (error) =>
 
 // GAME SOCKET SERVER
 const _game = require('./services/game/game');
-const game = require('./services/game/game');
 
 var io = require('socket.io').listen(server);
 
 io.on('connection', (socket) => {
+  socket.on("disconnect", () => {
+    const playerGameExists = _game.checkForPlayer(socket.id)
+
+    if (!playerGameExists) return
+
+    const gameLeft = _game.removePlayer(socket.id)
+    socket.broadcast.emit("playerLeft", gameLeft[0]);
+  })
+
   // A user hosts a game
   socket.on('hostNewGame', (newGame) => {
-    const game = _game.createGame(newGame)
+    const game = _game.createGame(newGame, socket.id)
     
     socket.join(game.id, () => {
       // Send back the game to the
@@ -42,14 +54,16 @@ io.on('connection', (socket) => {
   })
   
   socket.on("joinGame", data => {
-    const joinedGame = game.joinGame(data)
+    const joinedGame = _game.joinGame(data, socket.id)
     
     if (!joinedGame) return
     
     // If the game is complete and can be started
     if (joinedGame.players.length === joinedGame.totalPlayers) {
-      socket.broadcast.emit('gameStarting', joinedGame);
-      socket.emit('gameStarting', joinedGame);
+      const shuffledGame = _cards.shareCards(joinedGame)
+
+      socket.broadcast.emit('gameStarting', shuffledGame);
+      socket.emit('gameStarting', shuffledGame);
       return
     } 
     else {

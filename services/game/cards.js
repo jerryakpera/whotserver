@@ -339,7 +339,21 @@ function shuffleDeck() {
   return shuffle;
 }
 
+function shareCards(game) {
+	game.players.forEach((player, p) => {
+		for (let card = 0; card < game.noOfCards; card++) {
+			const singleCard = game.market.splice(0, 1)[0];
+			player.cards.push(singleCard);
+		}
+	});
+
+	game.playingCard = game.market.shift();
+
+	return game;
+}
+
 module.exports = {
   fullDeck,
-  shuffleDeck
+  shuffleDeck,
+  shareCards
 }

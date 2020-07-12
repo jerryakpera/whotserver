@@ -18,7 +18,9 @@ const refreshTokenSchema = new mongoose.Schema({
   timestamps: true
 })
 
-const refreshTokenExpiresAfter = process.env.JWTEXPIRYINSECONDS + 60
+const ENV = require("../../../config/env")
+
+const refreshTokenExpiresAfter = ENV === "dev" ? config.jwtExpiryInSeconds + 60 : process.env.JWTEXPIRYINSECONDS + 60
 // const refreshTokenExpiresAfter = config.jwtExpiryInSeconds + 60
 refreshTokenSchema.index({"createdAt": 1}, {expiresAfterSeconds: refreshTokenExpiresAfter})
 
