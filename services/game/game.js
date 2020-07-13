@@ -20,9 +20,13 @@ function createGame(data, socketID) {
       state: false,
       shape: ""
     },
-    pickThree: {
-      state: false,
-      pick: 0,
+    pick: {
+      type: "market",
+      no: 1
+    },
+    suspend: {
+      type: "suspension",
+      players: 1
     },
     players: [],
     // Fill the game market
@@ -33,7 +37,7 @@ function createGame(data, socketID) {
     },
     createdAt: _.formatDate(new Date()),
     lastMove: "",
-    playedCards: "",
+    lastPlayedCards: [],
     totalPlayers: data.game.totalPlayers,
     noOfCards: data.game.noOfCards
   }
@@ -111,6 +115,14 @@ function checkForPlayer(socketID) {
   return playerExists
 }
 
+function notDuplicatePlayer(gameID, playerID) {
+  const game = games.find(game => game.game.id === gameID)
+
+  const playerFound = game.players.find(player => player.id === playerID)
+
+  if (!playerFound) return true
+}
+
 function removePlayer(socketID) {
   const gameLeft = games.map(game => {
     const playerIndex = game.players.findIndex(player => player.socketID === socketID)
@@ -123,6 +135,20 @@ function removePlayer(socketID) {
   return gameLeft
 }
 
+function removeEmptyGames() {
+  const emptyGames = []
+  games.forEach(game => {
+    if(game.players.length === 0) {
+      emptyGames.push(game.game.id)
+    }
+  })
+
+  emptyGames.forEach(gameID => {
+    const gameIndex = games.findIndex(game => game.game.id === gameID)
+
+    games.splice(gameIndex, 1)
+  })
+}
 
 module.exports = {
   createGame,
@@ -130,5 +156,7 @@ module.exports = {
   joinGame,
   leaveGame,
   removePlayer,
-  checkForPlayer
+  checkForPlayer,
+  removeEmptyGames,
+  notDuplicatePlayer
 }

@@ -7,6 +7,8 @@ const db = require('./db/db');
 const port = ENV === "dev" ? process.env.PORT : config.port;
 
 const _cards = require("./services/game/cards")
+const _play = require("./services/game/play")
+const _game = require('./services/game/game');
 
 const server = app.listen(port, () => {
   console.log(`Server is listening on port ${port}`);
@@ -20,12 +22,13 @@ process.on('unhandledRejection', (error) =>
 );
 
 // GAME SOCKET SERVER
-const _game = require('./services/game/game');
 
 var io = require('socket.io').listen(server);
 
 io.on('connection', (socket) => {
   socket.on("disconnect", () => {
+    _game.removeEmptyGames()
+
     const playerGameExists = _game.checkForPlayer(socket.id)
 
     if (!playerGameExists) return
@@ -54,6 +57,10 @@ io.on('connection', (socket) => {
   })
   
   socket.on("joinGame", data => {
+    const playerCheck = _game.notDuplicatePlayer(data.gameID, data.player.id)
+
+    if (!playerCheck) return
+
     const joinedGame = _game.joinGame(data, socket.id)
     
     if (!joinedGame) return
@@ -75,7 +82,7 @@ io.on('connection', (socket) => {
   
   socket.on("leaveGame", data => {
     const gameLeft = _game.leaveGame(data)
-
+    
     if (!gameLeft) {
       const games = _game.getOpenGames()
       socket.emit('gameClosed', games);
@@ -85,6 +92,29 @@ io.on('connection', (socket) => {
     
     socket.emit('playerLeft');
     socket.broadcast.emit('playerLeft', gameLeft);
+  })
+  
+  socket.on("pickMarket", game => {
+    _play.pickMarket(game)
+    .then(pickedGame => {
+      socket.emit('gameContinue', pickedGame);
+      socket.broadcast.emit('gameContinue', pickedGame);
+    })
+  })
+
+  socket.on("playCards", data => {
+    const selectedCards = data.selectedCards
+    const game = data.game
+
+    _play.playCards(game, selectedCards)
+    .then(playedGame => {
+      console.log("****GAME****")
+      console.log(game.playingCard)
+      console.log("****PLAYED****")
+      console.log(playedGame.playingCard)
+      socket.emit('gameContinue', playedGame);
+      socket.broadcast.emit('gameContinue', playedGame);
+    })
   })
 });
 
