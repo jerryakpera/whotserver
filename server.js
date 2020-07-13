@@ -109,9 +109,8 @@ io.on('connection', (socket) => {
     _play.playCards(game, selectedCards)
     .then(playedGame => {
       console.log("****GAME****")
-      console.log(game.playingCard)
-      console.log("****PLAYED****")
-      console.log(playedGame.playingCard)
+      console.log(game.lastPlayedCards)
+
       socket.emit('gameContinue', playedGame);
       socket.broadcast.emit('gameContinue', playedGame);
     })

@@ -9,11 +9,11 @@ function createGame(data, socketID) {
     ...data.player,
     socketID,
     cards: [],
-    shouts: []
   }
-
+  
   // Create new game
   const newGame = {
+    shouts: [],
     currentPlayer: 0,
     playingCard: null,
     whot: {
@@ -71,8 +71,7 @@ function joinGame(data, socketID) {
   const player = {
     ...data.player,
     socketID,
-    cards: [],
-    shouts: []
+    cards: []
   }
 
   const index = games.findIndex(game => game.game.id === data.gameID)

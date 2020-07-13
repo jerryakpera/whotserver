@@ -13,14 +13,14 @@ function getPlayedCards(deck, selectedCards) {
   
       playedCards.push(playedCard)
   })
-  const lastPlayedCard = playedCards[playedCards.length - 1]
+  const lastPlayedCard = playedCards[0]
   return {playedCards, lastPlayedCard}
 }
 
 function getMistakes(game, lastPlayedCard) {
   return new Promise((resolve, reject) => {
     const playingCard = game.playingCard
-
+    
     if (game.whot.state) {
       if (playingCard.shape === game.whot.shape) {
         resolve()
@@ -29,17 +29,17 @@ function getMistakes(game, lastPlayedCard) {
       }
       return
     }
-
+    
     if (playingCard.shape === "whot") {
       resolve()
       return
     }
-
+    
     if (playingCard.no === 1) {
       resolve()
       return
     }
-
+    
     if (playingCard.shape === lastPlayedCard.shape) {
       resolve()
       return
@@ -89,6 +89,7 @@ function getNextPlay(game, playedCards) {
       game,
       played
     }
+    
     resolve(returnPlay)
   })
 }

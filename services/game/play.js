@@ -10,6 +10,7 @@ function pickMarket(game) {
 
         game.players[game.currentPlayer].cards = [ ...picked.playerCards ]
         game.market = [ ...picked.market ]
+        game.lastMove = `${currentPlayer.name} went to market`
         nextPlayer(game)
         resolve(game)
     });
@@ -43,9 +44,30 @@ function playCards(game, selectedCards) {
                 if (played.action === "game continue") {
                     // Set lastPlayedCards
                     dropCards(game, playedCards)
+                    setLastPlayedCards(game, playedCards)
+                    // Set playing card as the last card picked
+                    setPlayingCard(game, played.newPlayingCard)
+
+                    // Remove cards from player
+                    removeCardsFromPlayer(game, selectedCards);
+
+                    // Clear game attributes
+                    resetGameAttributes(game)
+                    
+                    // Next player
+                    nextPlayer(game)
+                    game.lastMove = "Game continue"
+    
+                    resolve(game)
+                }
+
+                if (played.action === "general market") {
+                    // Set lastPlayedCards
+                    dropCards(game, playedCards)
     
                     // Set playing card as the last card picked
                     setPlayingCard(game, played.newPlayingCard)
+                    setLastPlayedCards(game, playedCards)
 
                     // Remove cards from player
                     removeCardsFromPlayer(game, selectedCards);
@@ -59,16 +81,6 @@ function playCards(game, selectedCards) {
                     resolve(game)
                 }
             })
-    
-            // Remove played cards from the players cards
-            // console.log("Current player", currentPlayer)
-    
-            // Set the last played cards of the game to the played cards in that order
-    
-            // Set the last move
-    
-            // Next player
-            // console.log(0, "No mistake found")
         })
         .catch(() => {
             console.log(0, "MISTAKE!!!")
@@ -110,9 +122,15 @@ function removeCardsFromPlayer(game, selectedCards) {
     game.players[game.currentPlayer].cards = [...playerCards];
 }
 
-// Remove Change the current playing card
+// Set current playing card
 function setPlayingCard(game, card) {
     game.playingCard = card;
+}
+
+// Remove Change the current playing card
+function setLastPlayedCards(game, cards) {
+    game.lastPlayedCards = [];
+    game.lastPlayedCards = [ ...cards ];
 }
 
 // Drop played cards to game played cards
