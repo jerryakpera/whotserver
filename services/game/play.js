@@ -1,89 +1,201 @@
 const _cards = require("./cards");
 const _utils = require("../utils");
 const game = require("./game");
+const cards = require("./cards");
 
 function pickMarket(game) {
     return new Promise((resolve, reject) => {
         const currentPlayer = game.players[game.currentPlayer]
-
-        const picked = pickCards(currentPlayer.cards, game.market, game.pick.no)
-
-        game.players[game.currentPlayer].cards = [ ...picked.playerCards ]
-        game.market = [ ...picked.market ]
-        game.lastMove = `${currentPlayer.name} went to market`
-        nextPlayer(game)
-        resolve(game)
+        if (game.pick.type === "market") {
+            game.lastMove = `${currentPlayer.name} went to the market`
+        } else {
+            game.lastMove = `${currentPlayer.name} picked ${game.pick.no}`
+        }
+        pickCards(game, game.pick.no)
+        .then(pickedGame => {
+            game.pick = {
+                type: "market",
+                no: 1
+            }
+            nextPlayer(pickedGame)
+            resolve(pickedGame)
+        })
     });
 }
 
 // HELPA FANCTIOS
-function pickCards(playerCards, market, noOfCards) {
-    const cardsToPick = market.splice(0, noOfCards)
+function pickCards(game, noOfCards) {
+    return new Promise((resolve, reject) => {
+        let playerCards = game.players[game.currentPlayer].cards
+        const market = game.market
+        const cardsToPick = market.splice(0, noOfCards)
+    
+        game.players[game.currentPlayer].cards = [...playerCards, ...cardsToPick]
+    
+        resolve(game)
+    })
+}
 
-    playerCards = [...playerCards, ...cardsToPick]
+// General market function
+function generalMarket(game, played) {
+    return new Promise((resolve, reject) => {
+        // Get current player
+        const currentPlayer = game.players[game.currentPlayer]
+        
+        game.players.forEach((player) => {
+            if (currentPlayer.id != player.id) {
+                const cardsFromMarket = game.market.splice(0, game.pick.no)
 
-    return {
-        playerCards, 
-        market
-    }
+                player.cards = [...player.cards, ...cardsFromMarket]
+            }
+        })
+        
+        resolve(game)
+    })
+}
+
+function setWhotShape(game) {
+    return new Promise((resolve, reject) => {
+        nextPlayer(game)
+        game.lastMove = `I need ${game.whot.shape}`
+        resolve(game)
+    })
 }
 
 function playCards(game, selectedCards) {
     return new Promise((resolve, reject) => {
         const fullDeck = _cards.fullDeck
         const {playedCards, lastPlayedCard} = _utils.getPlayedCards(fullDeck, selectedCards)
+        const finalPlayedCard = playedCards[playedCards.length - 1]
         const currentPlayer = game.players[game.currentPlayer]
     
-        // Get Mistakes from last played card
+        // Get Mistakes from last played game
         _utils.getMistakes(game, lastPlayedCard)
         .then(() => {
-            
-            // Check for next play
+            // No mistakes
+            // Get next play
             _utils.getNextPlay(game, playedCards)
-            .then(({game, played}) => {
-                if (played.action === "game continue") {
-                    // Set lastPlayedCards
-                    dropCards(game, playedCards)
-                    setLastPlayedCards(game, playedCards)
-                    // Set playing card as the last card picked
-                    setPlayingCard(game, played.newPlayingCard)
+            .then(returnPlay => {
+                const playedGame = returnPlay.game
+                const played = returnPlay.played
+                // Change playing card
+                setPlayingCard(playedGame, finalPlayedCard)
+                // Remove cards from player
+                removeCardsFromPlayer(playedGame, selectedCards)
+                // Set last played cards
+                setLastPlayedCards(game, playedCards)
 
-                    // Remove cards from player
-                    removeCardsFromPlayer(game, selectedCards);
+                if (game.whot.shape != "") {
+                    game.whot = {
+                        state: false,
+                        shape: ""
+                    }
+                }
+                
+                if (played.action === "pick three") {
+                    // Set last move
+                    playedGame.lastMove = `Pick ${playedGame.pick.no}`
 
-                    // Clear game attributes
-                    resetGameAttributes(game)
-                    
                     // Next player
-                    nextPlayer(game)
-                    game.lastMove = "Game continue"
-    
-                    resolve(game)
+                    nextPlayer(playedGame)
+
+                    // Return game to server
+                    resolve(playedGame)
+                    return
+                }
+                
+                if (played.action === "pick two") {
+                    // Set last move
+                    playedGame.lastMove = `Pick ${playedGame.pick.no}`
+
+                    // Next player
+                    nextPlayer(playedGame)
+
+                    // Return game to server
+                    resolve(playedGame)
+                    return
+                }
+                
+                if (played.action === "general market") {
+                    // Set last move
+                    playedGame.lastMove = `General market ${playedGame.pick.no}`
+
+                    // General market
+                    generalMarket(playedGame, played)
+                    .then(pickedGame => {
+                        resolve(pickedGame)
+                        return
+                    })
+                }
+                
+                if (played.action === "hold on") {
+                    // Set last move
+                    playedGame.lastMove = `Hold on`
+
+                    // Return game to server
+                    resolve(playedGame)
+                    return
+                }
+                
+                if (played.action === "suspension") {
+                    // Set last move
+                    playedGame.lastMove = `Suspension`
+
+                    for (let i = 0; i < playedGame.players.length; i ++) {
+                        nextPlayer(playedGame)
+                    }
+                    // Return game to server
+                    resolve(playedGame)
+                    return
+                }
+                
+                if (returnPlay.played.action === "whot") {
+                    // Set last move
+                    playedGame.lastMove = `I need . . . !`
+
+                    // Return game to server
+                    resolve(playedGame)
+                    return
                 }
 
-                if (played.action === "general market") {
-                    // Set lastPlayedCards
-                    dropCards(game, playedCards)
-    
-                    // Set playing card as the last card picked
-                    setPlayingCard(game, played.newPlayingCard)
-                    setLastPlayedCards(game, playedCards)
-
-                    // Remove cards from player
-                    removeCardsFromPlayer(game, selectedCards);
-
-                    // Clear game attributes
-                    resetGameAttributes(game)
-                    
-                    // Next player
-                    nextPlayer(game)
-    
-                    resolve(game)
+                if (played.action === "game continue") {
+                    resetGameAttributes(playedGame)
+                    nextPlayer(playedGame)
+                    resolve(playedGame)
                 }
             })
         })
         .catch(() => {
-            console.log(0, "MISTAKE!!!")
+            // Check for mistakes
+
+            // If the player is to pick three
+            if (game.pick.type == "three" || game.pick.type === "two") {
+                let cardsToPick = game.pick.no
+
+                if (game.game.mistakes) {
+                    cardsToPick = game.pick.no
+                }
+
+                pickCards(game, cardsToPick)
+                .then(pickedGame => {
+                    pickedGame.lastMove = `${currentPlayer.name} picked for mistake`
+                    nextPlayer(pickedGame)
+                    resolve(pickedGame)
+                    return
+                })
+            }
+
+            if (game.game.mistakes) {
+                pickCards(game, 2)
+                .then(pickedGame => {
+                    if (!game.whot.state) {
+                        resetGameAttributes(pickedGame)
+                    }
+                    nextPlayer(pickedGame)
+                    resolve(pickedGame)
+                    return
+                })
+            }
         })
     })
 }
@@ -108,6 +220,8 @@ function resetGameAttributes(game) {
         type: "suspension",
         players: 1
     }
+
+    game.lastMove = "Game continue"
 }
 
 // Remove cards after play
@@ -138,7 +252,17 @@ function dropCards(game, cards) {
     game.lastPlayedCard = [...cards];
 }
 
+// Function to suspend players
+function suspension(game, played) {
+    if (played.suspend < game.players.length) {
+      for (let i = 0; i < played.suspend + 1; i++) {
+        nextPlayer(game)
+      }
+    }
+}
+
 module.exports = {
     pickMarket,
-    playCards
+    playCards,
+    setWhotShape
 }

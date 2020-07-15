@@ -108,11 +108,24 @@ io.on('connection', (socket) => {
 
     _play.playCards(game, selectedCards)
     .then(playedGame => {
-      console.log("****GAME****")
-      console.log(game.lastPlayedCards)
+      // console.log("****GAME****")
+      // console.log(game.lastPlayedCards)
 
-      socket.emit('gameContinue', playedGame);
-      socket.broadcast.emit('gameContinue', playedGame);
+      if (playedGame.whot.state && playedGame.whot.shape === "") {
+        socket.emit('selectShape', playedGame);
+        socket.broadcast.emit('gameContinue', playedGame);
+      } else {
+        socket.emit('gameContinue', playedGame);
+        socket.broadcast.emit('gameContinue', playedGame);
+      }
+    })
+  })
+
+  socket.on("shapeSelected", game => {
+    _play.setWhotShape(game)
+    .then(whotGame => {
+      socket.emit('gameContinue', whotGame);
+      socket.broadcast.emit('gameContinue', whotGame);
     })
   })
 });

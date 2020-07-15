@@ -1,10 +1,7 @@
-[x] Indicate turn
-[x] Notify users of last move
-[x] Set last played cards
-[x] Reduce max players to 4
+[ ] Play cards functionality
 
-[ ] Shout functionality
 [ ] Chat functionality
+[ ] Shout functionality
 [ ] Color heads in waITING SCREEN
 
 [ ] Add powers button

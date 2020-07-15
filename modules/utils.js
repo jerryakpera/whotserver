@@ -20,9 +20,6 @@ module.exports = {
     const decoded = base64.decode(string)
     return JSON.parse(decoded)
   },
-  formatDate: datestring => {
-    console.log(moment(datestring))
-  },
   getDifferenceInTime: date => {
     const [dYear, dMonth, dDay] = date.split("/")
     const today = {
