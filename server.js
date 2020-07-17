@@ -128,6 +128,11 @@ io.on('connection', (socket) => {
       socket.broadcast.emit('gameContinue', whotGame);
     })
   })
+
+  socket.on("sendMessage", message => {
+    socket.emit('receiveMsg', message);
+    socket.broadcast.emit('receiveMsg', message);
+  })
 });
 
 // SOCKET COMMANDS
