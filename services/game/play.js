@@ -3,6 +3,42 @@ const _utils = require("../utils");
 const game = require("./game");
 const cards = require("./cards");
 
+const shouts = []
+
+function shout(shoutObj) {
+    return new Promise((resolve, reject) => {
+        const shoutIndex = shouts.findIndex(shout => shout.gameID == shoutObj.gameID)
+    
+        if (shoutIndex < 0) {
+            const newShout = {
+                gameID: shoutObj.gameID,
+                shouts: [ shoutObj.playerID ]
+            }
+            shouts.push(newShout)
+        } else {
+            const gameShout = shouts[shoutIndex]
+    
+            const playerShoutIndex = gameShout.shouts.findIndex(player => player === shoutObj.playerID)
+    
+            if (playerShoutIndex < 0) {
+                gameShout.shouts.push(shoutObj.playerID)
+            } else {
+                gameShout.shouts.splice(playerShoutIndex, 1)
+            }
+        }
+
+        resolve()
+    })
+}
+
+function getGameShouts(gameID) {
+    return new Promise((resolve, reject) => {
+        const gameShout = shouts.find(shout => shout.gameID === gameID)
+
+        resolve(gameShout)
+    })
+}
+
 function pickMarket(game) {
     return new Promise((resolve, reject) => {
         const currentPlayer = game.players[game.currentPlayer]
@@ -78,6 +114,7 @@ function playCards(game, selectedCards) {
             .then(returnPlay => {
                 const playedGame = returnPlay.game
                 const played = returnPlay.played
+                console.log(playedGame.shouts)
                 // Change playing card
                 setPlayingCard(playedGame, finalPlayedCard)
                 // Remove cards from player
@@ -159,6 +196,7 @@ function playCards(game, selectedCards) {
                 }
 
                 if (played.action === "game continue") {
+
                     resetGameAttributes(playedGame)
                     nextPlayer(playedGame)
                     resolve(playedGame)
@@ -247,22 +285,10 @@ function setLastPlayedCards(game, cards) {
     game.lastPlayedCards = [ ...cards ];
 }
 
-// Drop played cards to game played cards
-function dropCards(game, cards) {
-    game.lastPlayedCard = [...cards];
-}
-
-// Function to suspend players
-function suspension(game, played) {
-    if (played.suspend < game.players.length) {
-      for (let i = 0; i < played.suspend + 1; i++) {
-        nextPlayer(game)
-      }
-    }
-}
-
 module.exports = {
     pickMarket,
     playCards,
-    setWhotShape
+    setWhotShape,
+    shout,
+    getGameShouts
 }

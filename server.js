@@ -7,6 +7,7 @@ const db = require('./db/db');
 const port = ENV === "dev" ? process.env.PORT : config.port;
 
 const _cards = require("./services/game/cards")
+const _scores = require("./services/game/scores")
 const _play = require("./services/game/play")
 const _game = require('./services/game/game');
 
@@ -67,7 +68,16 @@ io.on('connection', (socket) => {
     
     // If the game is complete and can be started
     if (joinedGame.players.length === joinedGame.totalPlayers) {
+      const scoreObj = {
+        gameID: joinedGame.game.id,
+        players: joinedGame.players
+      }
+
+      scoreCard = _scores.createScores(scoreObj)
+
       const shuffledGame = _cards.shareCards(joinedGame)
+
+      shuffledGame.scoreCard = scoreCard
 
       socket.broadcast.emit('gameStarting', shuffledGame);
       socket.emit('gameStarting', shuffledGame);
@@ -108,8 +118,6 @@ io.on('connection', (socket) => {
 
     _play.playCards(game, selectedCards)
     .then(playedGame => {
-      // console.log("****GAME****")
-      // console.log(game.lastPlayedCards)
 
       if (playedGame.whot.state && playedGame.whot.shape === "") {
         socket.emit('selectShape', playedGame);
@@ -133,12 +141,9 @@ io.on('connection', (socket) => {
     socket.emit('receiveMsg', message);
     socket.broadcast.emit('receiveMsg', message);
   })
+
+  socket.on("shoutLastCard", shout => {
+    socket.emit('broadcastShout', shout)
+    socket.broadcast.emit('broadcastShout', shout)
+  })
 });
-
-// SOCKET COMMANDS
-
-// Send to the client
-// socket.emit('hello', 'can you hear me?', 1, 2, 'abc');
-
-// sending to all clients except sender
-// socket.broadcast.emit('broadcast', 'hello friends!');
