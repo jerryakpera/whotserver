@@ -114,7 +114,6 @@ function playCards(game, selectedCards) {
             .then(returnPlay => {
                 const playedGame = returnPlay.game
                 const played = returnPlay.played
-                console.log(playedGame.shouts)
                 // Change playing card
                 setPlayingCard(playedGame, finalPlayedCard)
                 // Remove cards from player
@@ -196,7 +195,22 @@ function playCards(game, selectedCards) {
                 }
 
                 if (played.action === "game continue") {
+                    // Ensure that player ID is present in shouts
+                    const playerShoutIndex = playedGame.shouts.findIndex(shout => shout.playerID === currentPlayer.id)
 
+                    if (playerShoutIndex >= 0) {
+                        // console.log(0)
+                        // Ensure that card played is not whot
+                        if (playedCards[0].no != 20) {
+                            // console.log(currentPlayer.cards)
+                            if (currentPlayer.cards.length === 0) {
+                                // console.log(2)
+                                resolve("GameOver")
+                                return
+                            }
+                        }
+                    }
+                    
                     resetGameAttributes(playedGame)
                     nextPlayer(playedGame)
                     resolve(playedGame)

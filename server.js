@@ -119,6 +119,13 @@ io.on('connection', (socket) => {
     _play.playCards(game, selectedCards)
     .then(playedGame => {
 
+      // if (playedGame === "GameOver") {
+      //   console.log("ENDING GAME")
+      //   socket.emit('gameOver');
+      //   socket.broadcast.emit('gameOver')
+      //   return
+      // }
+
       if (playedGame.whot.state && playedGame.whot.shape === "") {
         socket.emit('selectShape', playedGame);
         socket.broadcast.emit('gameContinue', playedGame);
@@ -143,7 +150,18 @@ io.on('connection', (socket) => {
   })
 
   socket.on("shoutLastCard", shout => {
-    socket.emit('broadcastShout', shout)
-    socket.broadcast.emit('broadcastShout', shout)
+    // Add shout to a game shouts array
+    _game.lastCardShout(shout)
+    .then(gameShout => {
+      // socket.emit('broadcastShout', shout)
+      // socket.broadcast.emit('broadcastShout', shout)
+
+      socket.emit('updateShouts', gameShout)
+      socket.broadcast.emit('updateShouts', gameShout)
+    })
+    .catch(gameShout => {
+      socket.emit('updateShouts', gameShout)
+      socket.broadcast.emit('updateShouts', gameShout)
+    })
   })
 });

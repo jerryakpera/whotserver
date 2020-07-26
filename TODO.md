@@ -1,7 +1,16 @@
-[ ] Play cards functionality
+[x] Show user game stats on home page
+[x] Last card shout
+[x] Show last card shout
 
-[ ] Chat functionality
-[ ] Shout functionality
-[ ] Color heads in waITING SCREEN
+[ ] Player finishes cards in game continue
 
-[ ] Add powers button
+[ ] Check for player ID in game shouts
+[ ] If ID is not present do nothing
+[ ] If ID is present
+[ ] Check game type
+[ ] If game type is normal
+[ ] Show game over and winner
+[ ] If game over add 1 to winners won stat
+[ ] If game over add 1 to other players
+[ ] If game type is highest number out
+[ ] Calculate highest cards

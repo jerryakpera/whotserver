@@ -1,8 +1,10 @@
 const uniqid = require("uniqid")
 const _cards = require("./cards")
 const _ = require("../utils")
+const { resolveContent } = require("nodemailer/lib/shared")
 
 const games = []
+const shouts = []
 
 function createGame(data, socketID) {
   const player = {
@@ -149,6 +151,30 @@ function removeEmptyGames() {
   })
 }
 
+function lastCardShout(playerShout) {
+  return new Promise((resolve, reject) => {
+    
+    const gameShouts = playerShout.gameShouts
+    const playerID = playerShout.playerID
+    const playerName = playerShout.playerName
+    // Check for playerID in game shouts
+    const playerShoutIndex = gameShouts.findIndex(shout => shout.playerID === playerID)
+
+    if (playerShoutIndex < 0) {
+      const newShout = {
+        playerID,
+        playerName
+      }
+
+      gameShouts.push(newShout)
+      resolve(gameShouts)
+    } else {
+      gameShouts.splice(playerShoutIndex, 1)
+      reject(gameShouts)
+    }
+  })
+}
+
 module.exports = {
   createGame,
   getOpenGames,
@@ -157,5 +183,6 @@ module.exports = {
   removePlayer,
   checkForPlayer,
   removeEmptyGames,
-  notDuplicatePlayer
+  notDuplicatePlayer,
+  lastCardShout,
 }
