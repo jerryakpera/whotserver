@@ -6,10 +6,9 @@ const { resolveContent } = require("nodemailer/lib/shared")
 const games = []
 const shouts = []
 
-function createGame(data, socketID) {
+function createGame(data) {
   const player = {
     ...data.player,
-    socketID,
     cards: [],
   }
   
@@ -61,7 +60,8 @@ function getOpenGames() {
         totalPlayers: game.totalPlayers,
         mistakes: game.game.mistakes,
         createdAt: game.createdAt,
-        activePlayers: game.players.length
+        activePlayers: game.players.length,
+        stake: game.game.stake
       })
     }
   })
@@ -114,6 +114,27 @@ function checkForPlayer(socketID) {
   })
 
   return playerExists
+}
+
+function playerAlreadyExists(gameID, playerID) {
+  return new Promise((resolve, reject) => {
+    const game = games.find(game => game.game.id === gameID)
+    
+    if (!game) {
+      reject()
+      return
+    }
+
+    const playerIndex = game.players.findIndex(player => player.id === playerID)
+
+    if (playerIndex < 0) {
+      // Player was not found
+      resolve()
+    } else {
+      // Player was found
+      reject()
+    }
+  })
 }
 
 function notDuplicatePlayer(gameID, playerID) {
@@ -185,4 +206,5 @@ module.exports = {
   removeEmptyGames,
   notDuplicatePlayer,
   lastCardShout,
+  playerAlreadyExists,
 }

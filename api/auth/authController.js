@@ -75,50 +75,9 @@ module.exports = {
           newUser.flag = 0
           newUser.role = 2
           newUser.played = 0
+          newUser.points = 1000
           newUser.won = 0
           newUser.lost = 0
-          newUser.save((err, user) => {
-            if (err) {
-              reject(err)
-            }
-            resolve(user)
-          })
-        }).catch(err => {
-          reject(err)
-        })
-    })
-  },
-
-  registerAdmin: (user) => {
-    const BCRYPT_SALT_ROUNDS = 12
-    return new Promise((resolve, reject) => {
-      bcrypt.hash(user.password, BCRYPT_SALT_ROUNDS)
-        .then(hash => {
-          user.hash = hash
-          const newUser = new User(user)
-          newUser.flag = 0
-          newUser.role = 1
-          newUser.save((err, user) => {
-            if (err) {
-              reject(err)
-            }
-            resolve(user)
-          })
-        }).catch(err => {
-          reject(err)
-        })
-    })
-  },
-
-  registerSuperAdmin: (user) => {
-    const BCRYPT_SALT_ROUNDS = 12
-    return new Promise((resolve, reject) => {
-      bcrypt.hash(user.password, BCRYPT_SALT_ROUNDS)
-        .then(hash => {
-          user.hash = hash
-          const newUser = new User(user)
-          newUser.flag = 0
-          newUser.role = 0
           newUser.save((err, user) => {
             if (err) {
               reject(err)

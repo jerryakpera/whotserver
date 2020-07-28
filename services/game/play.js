@@ -1,9 +1,33 @@
 const _cards = require("./cards");
 const _utils = require("../utils");
-const game = require("./game");
-const cards = require("./cards");
+
+const UserController = require("../../modules/user/userController")
+// const cards = require("./cards");
 
 const shouts = []
+
+function highestNumberOut(game) {
+    return new Promise((resolve, reject) => {
+        const playerScores = []
+    
+        game.players.forEach(player => {
+            let sum = 0
+            player.cards.forEach(card => {
+                sum += card.value
+            })
+    
+            const playerInfo = {
+                ...player ,
+                score: sum
+            }
+    
+            delete playerInfo.cards
+    
+            playerScores.push(playerInfo)
+        })
+        resolve(playerScores)
+    })
+}
 
 function shout(shoutObj) {
     return new Promise((resolve, reject) => {
@@ -39,6 +63,26 @@ function getGameShouts(gameID) {
     })
 }
 
+function gameOver(game) {
+    return new Promise((resolve, reject) => {
+        game.players.sort((a, b) => a.score - b.score)[0]
+
+        game.players.forEach((player, i) => {
+            if (i === 0) {
+                player.played ++
+                player.won ++
+            } else {
+                player.played ++
+                player.lost ++
+            }
+            delete player.socketID
+            delete player.score
+        })
+
+        UserController.changeScores(game.players)
+    })
+}
+
 function pickMarket(game) {
     return new Promise((resolve, reject) => {
         const currentPlayer = game.players[game.currentPlayer]
@@ -52,6 +96,18 @@ function pickMarket(game) {
             game.pick = {
                 type: "market",
                 no: 1
+            }
+
+            if (pickedGame.market.length <= 0) {
+                // Trigger function to total each players cards values
+                highestNumberOut(pickedGame)
+                .then((scores) => {
+                    pickedGame.players = [...scores]
+                    gameOver(pickedGame)
+
+                    // resolve(pickedGame)
+                })
+                return
             }
             nextPlayer(pickedGame)
             resolve(pickedGame)
@@ -195,21 +251,6 @@ function playCards(game, selectedCards) {
                 }
 
                 if (played.action === "game continue") {
-                    // Ensure that player ID is present in shouts
-                    const playerShoutIndex = playedGame.shouts.findIndex(shout => shout.playerID === currentPlayer.id)
-
-                    if (playerShoutIndex >= 0) {
-                        // console.log(0)
-                        // Ensure that card played is not whot
-                        if (playedCards[0].no != 20) {
-                            // console.log(currentPlayer.cards)
-                            if (currentPlayer.cards.length === 0) {
-                                // console.log(2)
-                                resolve("GameOver")
-                                return
-                            }
-                        }
-                    }
                     
                     resetGameAttributes(playedGame)
                     nextPlayer(playedGame)

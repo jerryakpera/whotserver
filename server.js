@@ -10,6 +10,7 @@ const _cards = require("./services/game/cards")
 const _scores = require("./services/game/scores")
 const _play = require("./services/game/play")
 const _game = require('./services/game/game');
+const game = require('./services/game/game');
 
 const server = app.listen(port, () => {
   console.log(`Server is listening on port ${port}`);
@@ -40,11 +41,12 @@ io.on('connection', (socket) => {
 
   // A user hosts a game
   socket.on('hostNewGame', (newGame) => {
-    const game = _game.createGame(newGame, socket.id)
+    const game = _game.createGame(newGame)
     
-    socket.join(game.id, () => {
+    socket.join(game.game.id, () => {
       // Send back the game to the
       socket.emit('gameHosted', game);
+
       // Send all games to the user when a new game is hosted
       const games = _game.getOpenGames()
       socket.broadcast.emit('openGames', games);
@@ -58,11 +60,50 @@ io.on('connection', (socket) => {
   })
   
   socket.on("joinGame", data => {
+    _game.playerAlreadyExists(data.gameID, data.player.id)
+    .then(() => {
+      // Player joins game
+      socket.join(data.gameID, () => {
+        // Player is added to game
+        const joinedGame = _game.joinGame(data, socket.id)
+        
+        if(joinedGame.players.length === joinedGame.totalPlayers) {
+          // If all players are joined
+          const scoreObj = {
+            gameID: joinedGame.game.id,
+            players: joinedGame.players
+          }
+    
+          scoreCard = _scores.createScores(scoreObj)
+    
+          const shuffledGame = _cards.shareCards(joinedGame)
+    
+          shuffledGame.scoreCard = scoreCard
+
+          io.in(data.gameID).emit('gameStarting', shuffledGame);
+        } else {
+          // If the players are not complete send game back to all players in game room
+          
+          socket.emit('playerJoined', joinedGame);
+          socket.broadcast.emit('newPlayerJoined', joinedGame);
+
+          // io.in(data.gameID).emit('message', 'cool game');
+        }
+
+        // Gets updated list of all games
+        const games = _game.getOpenGames()
+        // Sends updated list to all clients
+        socket.broadcast.emit('openGames', games);
+      })
+    })
+    .catch(() => {
+      return
+    })
+    return
     const playerCheck = _game.notDuplicatePlayer(data.gameID, data.player.id)
 
     if (!playerCheck) return
 
-    const joinedGame = _game.joinGame(data, socket.id)
     
     if (!joinedGame) return
     
@@ -102,11 +143,22 @@ io.on('connection', (socket) => {
     
     socket.emit('playerLeft');
     socket.broadcast.emit('playerLeft', gameLeft);
+
+    // Gets updated list of all games
+    const games = _game.getOpenGames()
+    // Sends updated list to all clients
+    socket.broadcast.emit('openGames', games);
   })
   
   socket.on("pickMarket", game => {
     _play.pickMarket(game)
     .then(pickedGame => {
+      if (pickedGame.players[0].score) {
+        socket.emit('gameOver', pickedGame);
+        socket.broadcast.emit('gameOver', pickedGame);
+        
+        return
+      }
       socket.emit('gameContinue', pickedGame);
       socket.broadcast.emit('gameContinue', pickedGame);
     })

@@ -1,5 +1,3 @@
-const scores = []
-
 function createScores(scoreObj) {
     const score = {
         gameID: scoreObj.gameID,
@@ -14,7 +12,6 @@ function createScores(scoreObj) {
         })
     })
 
-    scores.push(score)
     return score
 }
 

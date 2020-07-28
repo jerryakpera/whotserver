@@ -71,6 +71,7 @@ module.exports = {
     
     try {
       const verified = jwt.verify(token, ENV === "dev" ? config.tokenSecret : process.env.TOKENSECRET)
+
       // const verified = jwt.verify(token, config.tokenSecret)
       AUTH.findByUserID(verified.userID).then(user => {
         if (!user) {

@@ -107,9 +107,11 @@ router.post("/register-user", AUTH.validateNewUser, (req, res) => {
             message: "User created",
             data: {
               "username": user.username,
+              "email": user.email,
               "userID": user._id,
               "flag": user.flag,
               "played": user.played,
+              "points": user.points,
               "won": user.won,
               "lost": user.lost,
               "accessToken": token,
@@ -147,168 +149,6 @@ router.post("/register-user", AUTH.validateNewUser, (req, res) => {
           error: err.message
         })
       }
-      return res.json({
-        status: 400,
-        message: err._message,
-        error: err.message
-      })
-    })
-})
-
-/** 
- * @swagger
- * /api/v1/auth/register-admin:
- *  post:
- *    tags: ["Authentication"]
- *    description: Endpoint to register a new admin user
- *    produces:
- *      - application/json
- *    parameters: [{
- *      name: register-admin,
- *      in: body,
- *      description: User object,
- *      required: true,
- *      schema: {
- *        $ref: '#/definitions/User'
- *      }
- *    }]
- *    responses:
- *      '200' :
- *        description: Success
- */
-// Admin registration route
-router.post("/register-admin", AUTH.validateNewUser, (req, res) => {
-  const errors = validationResult(req)
-
-  if (!errors.isEmpty()) {
-    return res.json({
-      status: 400,
-      message: "Request is incorrect",
-      errors: errors.array(),
-      data: {}
-    })
-  }
-
-  AUTH.registerAdmin(req.body)
-    .then(user => {
-      const token = TOKEN.createToken(user)
-      const expiresIn = TOKEN.getExpiresIn(token)
-
-      TOKEN.createRefreshToken(user._id)
-        .then(refreshToken => {
-          const activationLink = EMAIL.generateActivationLink(user)
-          EMAILBODY.email.completeRegistration(activationLink)
-            .then(emailBody => {
-              EMAIL.sendEmail(user.email, `Welcome ${user.username} Issue.Trakr`, emailBody)
-                .then(() => {
-                  console.log("Email Notification sent!")
-                })
-                .catch(err => {
-                  console.log(err)
-                })
-              return res.json({
-                status: 200,
-                message: "User created",
-                data: {
-                  "flag": user.flag,
-                  "userID": user._id,
-                  "accessToken": token,
-                  "refreshToken": refreshToken.token,
-                  expiresIn
-                }
-              })
-            })
-        })
-        .catch(err => {
-          return res.json({
-            status: 500,
-            message: err._message,
-            error: err.message
-          })
-        })
-    })
-    .catch(err => {
-      return res.json({
-        status: 400,
-        message: err._message,
-        error: err.message
-      })
-    })
-})
-
-/** 
- * @swagger
- * /api/v1/auth/register-superadmin:
- *  post:
- *    tags: ["Authentication"]
- *    description: Endpoint to register a new super admin
- *    produces:
- *      - application/json
- *    parameters: [{
- *      name: register-user,
- *      in: body,
- *      description: User object,
- *      required: true,
- *      schema: {
- *        $ref: '#/definitions/User'
- *      }
- *    }]
- *    responses:
- *      '200' :
- *        description: Success
- */
-
-// User registration route
-router.post("/register-superadmin", AUTH.validateNewUser, (req, res) => {
-  const errors = validationResult(req)
-
-  if (!errors.isEmpty()) {
-    return res.json({
-      status: 400,
-      message: "Request is incorrect",
-      errors: errors.array(),
-      data: {}
-    })
-  }
-
-  AUTH.registerSuperAdmin(req.body)
-    .then(user => {
-      const token = TOKEN.createToken(user)
-      const expiresIn = TOKEN.getExpiresIn(token)
-
-      TOKEN.createRefreshToken(user._id)
-        .then(refreshToken => {
-          const activationLink = EMAIL.generateActivationLink(user)
-          EMAILBODY.email.completeRegistration(activationLink)
-            .then(emailBody => {
-              EMAIL.sendEmail(user.email, `Welcome ${user.username} Issue.Trakr`, emailBody)
-                .then(() => {
-                  console.log("Email Notification sent!")
-                })
-                .catch(err => {
-                  console.log(err)
-                })
-              return res.json({
-                status: 200,
-                message: "User created",
-                data: {
-                  "userID": user._id,
-                  "accessToken": token,
-                  "refreshToken": refreshToken.token,
-                  expiresIn
-                }
-              })
-            })
-        })
-        .catch(err => {
-          return res.json({
-            status: 500,
-            message: err._message,
-            error: err.message
-          })
-        })
-    })
-    .catch(err => {
       return res.json({
         status: 400,
         message: err._message,
@@ -415,6 +255,7 @@ router.post("/login", AUTH.loginValidator, (req, res) => {
           message: "User logged in",
           data: {
             "username": user.username,
+            "email": user.email,
             "userID": user._id,
             "flag": user.flag,
             "played": user.played,
@@ -961,6 +802,7 @@ router.post("/remove", TOKEN.verify, (req, res) => {
  *        description: Success
  */
 router.post("/details", TOKEN.verify, (req, res) => {
+  
   AUTH.findByEmail(req.body.email)
     .then(user => {
       if (!user) {
@@ -976,6 +818,10 @@ router.post("/details", TOKEN.verify, (req, res) => {
         data: {
           username: user.username,
           email: user.email,
+          points: user.points,
+          played: user.played,
+          won: user.won,
+          lost: user.lost,
           createdOn: user.createdAt,
           updatedOn: user.updatedAt,
           flag: user.flag,
