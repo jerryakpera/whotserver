@@ -111,7 +111,6 @@ router.post("/register-user", AUTH.validateNewUser, (req, res) => {
               "userID": user._id,
               "flag": user.flag,
               "played": user.played,
-              "points": user.points,
               "won": user.won,
               "lost": user.lost,
               "accessToken": token,
@@ -818,7 +817,6 @@ router.post("/details", TOKEN.verify, (req, res) => {
         data: {
           username: user.username,
           email: user.email,
-          points: user.points,
           played: user.played,
           won: user.won,
           lost: user.lost,

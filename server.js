@@ -99,36 +99,6 @@ io.on('connection', (socket) => {
     .catch(() => {
       return
     })
-    return
-    const playerCheck = _game.notDuplicatePlayer(data.gameID, data.player.id)
-
-    if (!playerCheck) return
-
-    
-    if (!joinedGame) return
-    
-    // If the game is complete and can be started
-    if (joinedGame.players.length === joinedGame.totalPlayers) {
-      const scoreObj = {
-        gameID: joinedGame.game.id,
-        players: joinedGame.players
-      }
-
-      scoreCard = _scores.createScores(scoreObj)
-
-      const shuffledGame = _cards.shareCards(joinedGame)
-
-      shuffledGame.scoreCard = scoreCard
-
-      socket.broadcast.emit('gameStarting', shuffledGame);
-      socket.emit('gameStarting', shuffledGame);
-      return
-    } 
-    else {
-      // If the players are not yet complete
-      socket.emit('playerJoined', joinedGame);
-      socket.broadcast.emit('newPlayerJoined', joinedGame);
-    }
   })
   
   socket.on("leaveGame", data => {
@@ -153,14 +123,12 @@ io.on('connection', (socket) => {
   socket.on("pickMarket", game => {
     _play.pickMarket(game)
     .then(pickedGame => {
-      if (pickedGame.players[0].score) {
-        socket.emit('gameOver', pickedGame);
-        socket.broadcast.emit('gameOver', pickedGame);
-        
+      if (pickedGame.status === "over") {
+        io.in(pickedGame.game.id).emit('gameOver', pickedGame);
         return
       }
-      socket.emit('gameContinue', pickedGame);
-      socket.broadcast.emit('gameContinue', pickedGame);
+
+      io.in(pickedGame.game.id).emit('gameContinue', pickedGame);
     })
   })
 
@@ -170,14 +138,6 @@ io.on('connection', (socket) => {
 
     _play.playCards(game, selectedCards)
     .then(playedGame => {
-
-      // if (playedGame === "GameOver") {
-      //   console.log("ENDING GAME")
-      //   socket.emit('gameOver');
-      //   socket.broadcast.emit('gameOver')
-      //   return
-      // }
-
       if (playedGame.whot.state && playedGame.whot.shape === "") {
         socket.emit('selectShape', playedGame);
         socket.broadcast.emit('gameContinue', playedGame);
@@ -196,9 +156,12 @@ io.on('connection', (socket) => {
     })
   })
 
-  socket.on("sendMessage", message => {
-    socket.emit('receiveMsg', message);
-    socket.broadcast.emit('receiveMsg', message);
+  socket.on("sendMessage", ({player, gameID, message}) => {
+    const msg = {
+      player,
+      message
+    }
+    io.in(gameID).emit('receiveMsg', msg);
   })
 
   socket.on("shoutLastCard", shout => {

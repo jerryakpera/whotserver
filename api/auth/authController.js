@@ -75,7 +75,6 @@ module.exports = {
           newUser.flag = 0
           newUser.role = 2
           newUser.played = 0
-          newUser.points = 1000
           newUser.won = 0
           newUser.lost = 0
           newUser.save((err, user) => {

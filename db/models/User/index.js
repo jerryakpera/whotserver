@@ -18,10 +18,6 @@ const userSchema = new mongoose.Schema({
     default: 2,
     required: true
   },
-  points: {
-    type: Number,
-    default: 1000,
-  },
   played: {
     required: true,
     type: Number,

@@ -6,29 +6,6 @@ const UserController = require("../../modules/user/userController")
 
 const shouts = []
 
-function highestNumberOut(game) {
-    return new Promise((resolve, reject) => {
-        const playerScores = []
-    
-        game.players.forEach(player => {
-            let sum = 0
-            player.cards.forEach(card => {
-                sum += card.value
-            })
-    
-            const playerInfo = {
-                ...player ,
-                score: sum
-            }
-    
-            delete playerInfo.cards
-    
-            playerScores.push(playerInfo)
-        })
-        resolve(playerScores)
-    })
-}
-
 function shout(shoutObj) {
     return new Promise((resolve, reject) => {
         const shoutIndex = shouts.findIndex(shout => shout.gameID == shoutObj.gameID)
@@ -63,26 +40,6 @@ function getGameShouts(gameID) {
     })
 }
 
-function gameOver(game) {
-    return new Promise((resolve, reject) => {
-        game.players.sort((a, b) => a.score - b.score)[0]
-
-        game.players.forEach((player, i) => {
-            if (i === 0) {
-                player.played ++
-                player.won ++
-            } else {
-                player.played ++
-                player.lost ++
-            }
-            delete player.socketID
-            delete player.score
-        })
-
-        UserController.changeScores(game.players)
-    })
-}
-
 function pickMarket(game) {
     return new Promise((resolve, reject) => {
         const currentPlayer = game.players[game.currentPlayer]
@@ -98,28 +55,108 @@ function pickMarket(game) {
                 no: 1
             }
 
-            if (pickedGame.market.length <= 0) {
-                // Trigger function to total each players cards values
-                highestNumberOut(pickedGame)
-                .then((scores) => {
-                    pickedGame.players = [...scores]
-                    gameOver(pickedGame)
-
-                    // resolve(pickedGame)
-                })
-                return
-            }
             nextPlayer(pickedGame)
             resolve(pickedGame)
         })
     });
 }
 
+function countCards(players) {
+    // Add value of each players cards
+    const playerScores = []
+
+    players.forEach(player => {
+        const scores = {
+            id: player.id,
+            name: player.name,
+            played: player.played,
+            won: player.won,
+            lost: player.lost
+        }
+
+
+        scores.total = player.cards.reduce((accum, card) => accum + card.value, 0)
+        
+        playerScores.push(scores)
+    })
+
+    playerScores.sort((a, b) => a.total - b.total ? -1 : 1)
+    
+    return playerScores
+}
+
+function modifyGameScores(game, playerScores) {
+    return new Promise((resolve, reject) => {
+        const winner = playerScores[0]
+    
+        game.scoreCard.players.forEach(player => {
+            player.winner = false
+            if (player.id === winner.id) {
+                // Add 1 to score
+                player.score ++
+                player.winner = true
+            }
+            const p = playerScores.find(pl => pl.id === player.id)
+
+            player.cardsTotal = p.total
+        })
+        
+        playerScores.forEach(player => {
+            if (player.id === winner.id) {
+                // Add 1 to won
+                player.won ++
+            } else {
+                // Add 1 to lost
+                player.lost ++
+            }
+            // Add 1 to played
+            player.played ++
+        })
+    
+        // update players statistics
+        UserController.updatePlayerScores(playerScores)
+        
+        resolve(game)
+    })
+}
+
+function gameOver(game) {
+    return new Promise((resolve, reject) => {
+        // Count cards
+        const playerScores = countCards(game.players)
+
+        // Modify game scores
+        modifyGameScores(game, playerScores)
+        .then(editedGame => {
+            editedGame.status = "over"
+            resolve(editedGame)
+        })
+    })
+}
+
 // HELPA FANCTIOS
 function pickCards(game, noOfCards) {
     return new Promise((resolve, reject) => {
+        if(noOfCards >= game.market.length) {
+            noOfCards = game.market.length
+            
+            let playerCards = game.players[game.currentPlayer].cards
+            const market = game.market
+            
+            const cardsToPick = market.splice(0, noOfCards)
+        
+            game.players[game.currentPlayer].cards = [...playerCards, ...cardsToPick]
+            
+            // Market has finished trigger highest number out
+            gameOver(game)
+            .then(endedGame => {
+                resolve(endedGame)
+            })
+        }
+
         let playerCards = game.players[game.currentPlayer].cards
         const market = game.market
+        
         const cardsToPick = market.splice(0, noOfCards)
     
         game.players[game.currentPlayer].cards = [...playerCards, ...cardsToPick]

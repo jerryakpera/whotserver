@@ -1,17 +1,17 @@
 const User = require("../../db/models/User/index")
 
-function changeScores(users) {
-    users.forEach(user => {
-        User.updateOne({_id: user.id}, user, (err, doc) => {
-            if (err) {
-                console.log(0, err)
-            }
-            console.log(1, doc)
-        })
+function updatePlayerScores(playerScores) {
+    playerScores.forEach(player => {
+        User.findOne({ _id: player.id }, (err, doc) => {
+            doc.played = player.played
+            doc.won = player.won
+            doc.lost = player.lost
+            doc.save();
+        });
     })
 }
 
 
 module.exports = {
-    changeScores
+    updatePlayerScores
 }

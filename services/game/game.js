@@ -40,7 +40,8 @@ function createGame(data) {
     lastMove: "",
     lastPlayedCards: [],
     totalPlayers: data.game.totalPlayers,
-    noOfCards: data.game.noOfCards
+    noOfCards: data.game.noOfCards,
+    status: "playing"
   }
 
   newGame.players.push(player)
