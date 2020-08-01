@@ -341,6 +341,7 @@ function shuffleDeck() {
 
 function shareCards(game) {
 	game.players.forEach((player, p) => {
+    player.cards = []
 		for (let card = 0; card < game.noOfCards; card++) {
 			const singleCard = game.market.splice(0, 1)[0];
 			player.cards.push(singleCard);

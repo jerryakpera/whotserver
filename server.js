@@ -179,4 +179,13 @@ io.on('connection', (socket) => {
       socket.broadcast.emit('updateShouts', gameShout)
     })
   })
+
+  socket.on("rematch", whotGame => {
+    io.in(whotGame.game.id).emit('gameRestarting');
+    
+    const shuffledGame = _cards.shareCards(whotGame)
+    
+    shuffledGame.scoreCard = scoreCard
+    io.in(shuffledGame.game.id).emit('gameRestartReady', shuffledGame);
+  })
 });
